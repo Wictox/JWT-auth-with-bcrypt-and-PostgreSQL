@@ -1,16 +1,27 @@
-# JWT Authentication API
+# 🔐 JWT Authentication API
 
-A REST API implementing user authentication with JWT tokens, built with Node.js, Express, and PostgreSQL.
+A REST API implementing user authentication with JWT tokens —
+signup, login, and middleware-protected routes.
 
-## Features
-- User signup with bcrypt password hashing
-- Login endpoint issuing signed JWTs
-- Middleware-protected routes
+![demo](docs/demo.gif)
 
-## Stack
-Node.js, Express, PostgreSQL (Docker), bcrypt, jsonwebtoken
+## 🛠️ Tech
+Node.js · Express · PostgreSQL (Docker) · bcrypt · jsonwebtoken
 
-## Setup
+## ⚙️ How it works
+
+Three pieces: a signup route that hashes passwords with bcrypt before
+storing them, a login route that verifies the password and returns a
+signed JWT, and a middleware that validates the token's signature on
+protected routes.
+
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| POST | `/signup` | No | Create an account |
+| POST | `/login` | No | Get a JWT |
+| GET | `/protected` | Yes | Example protected route |
+
+## 🚀 Running it
 
 **1. Start PostgreSQL**
 ```bash
@@ -25,7 +36,8 @@ docker run --name auth-postgres \
 ```bash
 docker exec -i auth-postgres psql -U postgres < schema.sql
 ```
-Or connect to the server through pgAdmin (host `localhost`, port `5432`) and run the contents of `schema.sql` in the query tool.
+Or connect through pgAdmin (host `localhost`, port `5432`) and run
+the contents of `schema.sql` in the query tool.
 
 **3. Install dependencies**
 ```bash
@@ -42,15 +54,7 @@ cp .env.example .env   # then fill in your values
 node server.js
 ```
 
-## Endpoints
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| POST | `/signup` | No | Create an account |
-| POST | `/login` | No | Get a JWT |
-| GET | `/protected` | Yes | Example protected route |
-
-## Testing
+## 🧪 Testing
 
 ```bash
 # Sign up
@@ -71,8 +75,18 @@ curl http://localhost:3000/protected \
 curl http://localhost:3000/protected
 ```
 
-## Notes
+## 📝 Notes on building it
 
-Tokens expire after one hour. Passwords are hashed with bcrypt using 10 salt rounds. The JWT payload contains only the user id and email — nothing sensitive, since the payload is base64-encoded and readable by anyone holding the token.
+**Why JWT over server-side sessions.** JWTs are stateless — the server
+stores nothing and only verifies the token's signature on each request.
+Any instance can authenticate any request, which avoids needing a shared
+session store when running multiple servers. The tradeoff is revocation:
+a token stays valid until it expires, so there's no instant logout
+without maintaining a blocklist. Short expiry times mitigate this.
 
-JWT was chosen over server-side sessions because it is stateless: the server stores nothing and only verifies the token's signature on each request. This means any instance can authenticate any request, which avoids needing a shared session store when running multiple servers. The tradeoff is revocation — a token stays valid until it expires, so there is no instant logout without maintaining a blocklist. Short expiry times mitigate this.
+**What's in the payload.** Only user id and email. The payload is
+base64-encoded, not encrypted, so anyone holding the token can read it —
+nothing sensitive goes in there.
+
+**Parameters.** Tokens expire after one hour. Passwords are hashed with
+bcrypt at 10 salt rounds.
